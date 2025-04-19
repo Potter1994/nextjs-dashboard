@@ -103,3 +103,32 @@ Next.js 採用 "檔案系統為基礎的路由 (File-system routing)"，透過�
 - app folder 底下只有 page.file 會是公開訪問的
 - page.tsx: "必填的特殊檔案"，輸出一個 React component，該路由才會對外開放(即可已被訪問)
 - layout.tsx: 可以用來建立該層(跟該層底下)路由的共用 UI (例如側邊覽、導覽列)
+  layout.tsx 如果該層某些或底下不想套用 (使用 pathname 或者 (dir) 資料夾分組的方法去控制)
+
+#### Root layout
+
+/app/layout.tsx 是一定要有的在每個 Next.js application，你在這加的 UI 會被 shared scroll all pages in your application.
+可以操作你的 <html> and <body> tags, and add metadata
+
+layout.tsx 目的就是為了 share UI
+
+## 5. Navigation Between Pages
+
+#### The <Link> component
+
+- 會使用 browser 的 window.history.pushState() 更改 URL，不會重新載入整頁
+- 在 Server Component 一樣能使用他，他會被序列化然後類似於某個 tag (@link 大概這樣) 來讓 Client Component hydration
+- 由於 Next.js 會自動根據 路由段落(route segment) 來做程式碼切格(code-splitting) 所以只會載入當前 route 的 JS
+- 有 prefetch 的功能可以預先取回 code for the linked route in the background，prefetch 只有在 production 的環境下有用，他只要出現在 viewport 看到就會 prefetch，主要是靠著
+
+```
+<link rel='prefetch' href="/xxx">做到，當然也可以關掉 prefetch 的功能。
+[Link 相關屬性](https://nextjs.org/docs/pages/api-reference/components/link)
+```
+
+#### Pattern: Showing active links
+
+需要使用 Next.js 提供的 hook 叫做 usePathname()，然後你就能確認 path 來去時做這個 pattern。
+但是 usePathname() 是 React hook，所以必須把你的 nav-links.tsx 轉變成 Client Component， 加上 "use client" 在檔案類的程式碼最上方，然後 import usePathname() from 'next/navigation'; 如果你沒有轉成 Client Component 他也會有錯誤提示提醒你 usePathname 屬於 React hook 必須轉成 Client Component。
+
+再使用 clsx 或隨便 CSS 去控制 Link 的樣式。
