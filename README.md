@@ -132,3 +132,88 @@ layout.tsx 目的就是為了 share UI
 但是 usePathname() 是 React hook，所以必須把你的 nav-links.tsx 轉變成 Client Component， 加上 "use client" 在檔案類的程式碼最上方，然後 import usePathname() from 'next/navigation'; 如果你沒有轉成 Client Component 他也會有錯誤提示提醒你 usePathname 屬於 React hook 必須轉成 Client Component。
 
 再使用 clsx 或隨便 CSS 去控制 Link 的樣式。
+
+## 6. 與 Vercel 連動
+
+#### 故障排除
+
+- bcrypt 有些環境會有 Module error，再更改為 bcryptjs 替代。
+
+## 7. Fetching Data
+
+#### RSC 相關資料
+
+- [RSC 認識](https://oldmo860617.medium.com/%E5%BE%9E-next-js-13-%E8%AA%8D%E8%AD%98-react-server-components-37c2bad96d90)
+- [RSC 實踐](https://juejin.cn/post/7457011188167294976)
+- Next.js 能使用 RSC 主要是靠著他的 Turbopack + SWC + webpack 做出來的 (react-server-dom-webpack 這個包是重點)
+
+#### 使用 Server Component to fetch Data (RSC)
+
+## Next.js 使用 "React Server Component"(RSC) 有幾個好處
+
+- Server Component 支援 JavaScript Promise 來取得非同步任務提供猿聲解決方案。可以使用 async/await 語法而不需要使用 useEffect、useState 其他資料取得
+- Server Component 跑在 server 上，所以昂貴的 fetch and logic 會在 server，只有傳送 result 給 client 端。
+- 因為 Server Component 跑在 server，所以可以直接操作 DB 無須額外的 API 層
+
+## SQL query 一些用法
+
+在 SQL 如果你只 fetch 你需要的 data 效能會稍微提升
+
+```
+const invoiceCountPromise = sql`SELECT COUNT(*) FROM invoices`;
+```
+
+## 8. Static and Dynamic Rendering
+
+#### What is Static Rendering?
+
+透過靜態渲染 (Static Rendering)，data fetching and rendering 發生在 server at build time(when you deploy) 或者 when revalidating data(重新驗證資料)
+優點:
+
+- Faster Website: 當部署到 Vercel 等平台，預先渲染的內容可以被快取在全球範圍內分發。可確保世界各地的使用這能夠更快、更可靠的存取你網站內容。
+
+- Reduce Server Load: 由於內容已被快取，伺服器不必為每個用戶動態生成內容。可以降題計算成本。
+
+- SEO: 預先渲染的內容更容易被搜尋引擎爬蟲索引，可以提高排名。
+  靜態渲染對於沒有資料或跨使用者共享資料的 UI 很有用，例如產品頁面。但她可能不太適合定期更新個人化資料的儀錶板。
+
+#### Dynamic Rendering
+
+透過動態渲染，內容會在請求時(使用者訪問頁面時) 在伺服器上為每個使用者渲染。
+優點:
+
+- 即時數據(Real-Time Data): 動態渲染可以讓你的應用程式顯示即時或頻繁更新的資料。
+
+- 使用者特定內容(User-Specific Content): 更容易提供個人化資料，例如儀表板或使用者設定文件，並根據使用者互動更新資料。
+
+- 請求時資訊(Request Time Information): 動態渲染可讓你存取只能在請求時知道的訊息，例如 cookie 或 URL 搜尋參數。
+
+## 9. Streaming(串流傳輸)
+
+#### What is streaming?
+
+Streaming 是一種資料傳輸技術，他允許將路由分解為更小的 "chunks(區塊)" ，並在準備好時逐步將他們從伺服器串流傳輸到客戶端。
+透過 Streaming，你可以避免太慢的資料請求阻塞整個頁面。這使得用戶能夠查看頁面的各個部分並進行交互，而無需等待所有資料加載完畢才能向用戶顯示任何 UI。
+Streaming 與 React 的元件模型配合得很好，因為每個元件都可被視為一個 "chunk(區塊)"
+Next.js 中時做串留有兩種方法:
+
+1. 在 page level, 使用 loading.tsx file(為你建立 <Suspense>)
+2. 在 component level, 使用 <Suspense> 實現更精細的控制。
+
+#### Fixing the loading skeleton bug with route groups
+
+- 可以使用 [Route Group](https://nextjs.org/docs/app/building-your-application/routing/route-groups) 將 page.tsx 跟 loading.tsx 或者 layout.tsx 搬移到 /(overview) 來控制 loading.tsx、layout.tsx 作用的範圍，就不會作用到子路由了。
+
+#### Deciding where to place your Suspense boundaries(決定 Suspense 的邊界在哪)
+
+Suspense 的界線取決於以下幾點:
+
+1. 你希望使用者如何體驗 the page as it streams.
+2. What content you want to prioritize 你想優先考慮那些內容
+3. If the components rely(依賴) on data fetching.
+
+照著範例的儀表板頁面，其實沒有正確答案。
+
+- 可以 stream 整個 page 就像我們一開始使用 loading.tsx ，但是如果其中一個 component fetch data 很慢，會導致更長的載入時間。
+- 可以單獨 stream every component individually(單獨地)，但是會導致 UI 在準備就緒時彈出在螢幕上。
+- 也可以透過 stream page sections(頁面部分像<CardWrapper />) 建立交錯效果，但需要包裝元件。
