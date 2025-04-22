@@ -52,7 +52,7 @@ For more information, see the [course curriculum](https://nextjs.org/learn) on t
 字體如何造成 Layout Shift?
 
 - 瀏覽器一開始使用預設系統字體來顯示文字。
-- 當自訂自己在入後，會將原孩的文字替換掉。
+- 當自訂自己在入後，會將原來的文字替換掉。
 - 若自訂字體的尺寸或間距不同，就會導致畫面元素被推擠、移動，造成 Layout Shift。
 
 Next.js 提供 next/font 模組，可以有要解決字體造成的 CLS 問題
@@ -122,7 +122,7 @@ layout.tsx 目的就是為了 share UI
 - 有 prefetch 的功能可以預先取回 code for the linked route in the background，prefetch 只有在 production 的環境下有用，他只要出現在 viewport 看到就會 prefetch，主要是靠著
 
 ```
-<link rel='prefetch' href="/xxx">做到，當然也可以關掉 prefetch 的功能。
+<link rel='prefetch' href="/xxx">做到，當然也可以關掉 prefetch 的功能。 (他實際做法應該是直接去 fetch 然後存在某個 cacheModule 中)
 [Link 相關屬性](https://nextjs.org/docs/pages/api-reference/components/link)
 ```
 
@@ -217,3 +217,16 @@ Suspense 的界線取決於以下幾點:
 - 可以 stream 整個 page 就像我們一開始使用 loading.tsx ，但是如果其中一個 component fetch data 很慢，會導致更長的載入時間。
 - 可以單獨 stream every component individually(單獨地)，但是會導致 UI 在準備就緒時彈出在螢幕上。
 - 也可以透過 stream page sections(頁面部分像<CardWrapper />) 建立交錯效果，但需要包裝元件。
+
+## 10. Partial Prerendering (部分渲染)
+
+Next.js 14 引入的實驗性還不是穩定版本，不推薦在產品中使用
+
+1. pnpm install next@canary
+2. 在 next.config.ts 新增 nextConfig 的設定
+
+- experimental: {ppr: 'incremental'}
+
+3. 在檔案(layout.tsx 或 page.tsx) 最上方 export const experimental_ppr = true;
+
+然後他就會自動識別，基本仰賴 Suspense 來認定為 dynamic
