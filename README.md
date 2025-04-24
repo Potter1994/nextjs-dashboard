@@ -230,3 +230,41 @@ Next.js 14 引入的實驗性還不是穩定版本，不推薦在產品中使用
 3. 在檔案(layout.tsx 或 page.tsx) 最上方 export const experimental_ppr = true;
 
 然後他就會自動識別，基本仰賴 Suspense 來認定為 dynamic
+
+## 11. Adding Search and Pagination
+
+使用 const pathname = usePathname()
+使用 const searchParams = useSearchParams() 來取得 query string，但這是 read only 所以需要再使用 const param = new URLSearchParams(searchParams)，此時就能使用 param 去新增或刪除 query string，最後返回結果 `${pathname}?${param.toString()}` 即可
+
+## 12. Mutating Data
+
+#### Server Actions
+
+1. 可直接在 server 非同步執行
+2. 可以被 client component / server component 調用
+3. 在 react 可以使用 form 的 action 屬性調用，callback 參數會直接拿到 FormData
+4. 就算 client 端沒有載入 js 或失敗，依然可以使用(html 的 form action 有正常使用，是交給 server 端操作)
+
+Next.js 會將許多 static 快取，使用 revalidatePath(/dashboard/invoices) 將此 url 重新快取關係一次
+
+- revalidatePath: 會將 client cache 清掉，重新從 Server 拿資料，如果 revalidatePath 當下的路徑，也會觸發新的 server request 並且 re-render
+
+- redirect: server component 的路由
+
+## 13. Handling Errors
+
+redirect 實際上是 throw 一個特殊的錯誤，寫在 try 裡面會被 catch 接住反而不能跳轉
+
+#### error.tsx
+
+- "use client" 讓她是 Client Component
+- 包含兩個屬性
+  a. error: This object is an instance of JavaScript's native Error object.
+  b. reset: This is a function to reset error boundary. 當執行後，會嘗試 re-render route setment
+
+#### notFound function(import 進來程式碼使用) 跟 not-found.tsx 搭配使用
+
+notFound() 調用就會跑到 not-found.tsx
+notFound 會優先於 error.tsx
+
+## 14. Improving Accessibility
