@@ -268,3 +268,72 @@ notFound() 調用就會跑到 not-found.tsx
 notFound 會優先於 error.tsx
 
 ## 14. Improving Accessibility
+
+- aria-describedby="xxx": 設定在 input 或 form control 上的屬性，匹配文字的 id 是 customer-error，請螢幕閱讀器讀給使用者聽
+
+- aria-live="polite" 內容改變，不要立刻打斷使用者，有空再唸出來
+
+- aria-aomic="true" 內容改變，整段都念，不要只念變更部分
+
+#### useActionState 搭配 Zod 使用
+
+```
+// actions.ts
+const FormSchema = z.object({
+  id: z.string(),
+  customerId: z.string({ invalid_type_error: 'Please select a customer.' }),
+  amount: z.coerce.number().gt(0, 'Please enter an amount greater than $0.'),
+  status: z.enum(['pending', 'paid'], { invalid_type_error: 'Please select an invoice status.' }),
+  date: z.string(),
+})
+
+export type State = {
+  errors?: {
+    customerId?: string[],
+    amount?: string[],
+    status?: string[],
+  },
+  message?: null | string
+}
+
+export async function createInvoice(prevState: State, formData: FormData) {
+  // Validate form using Zod
+  const validatedFields = CreateInvoice.safeParse({
+    customerId: formData.get('customerId'),
+    amount: formData.get('amount'),
+    status: formData.get('status'),
+  })
+
+
+  // If form validation fails, return errors early. Otherwise, continue.
+  if (!validatedFields.success) {
+    return { errors: validatedFields.error.flatten().fieldErrors, message: 'Missing Fields. Failed to Create Invoice.' }
+  }
+
+  const { amount, customerId, status } = validatedFields.data
+  const amountInCents = amount * 100
+  const date = new Date().toISOString().split('T')[0]
+
+  // Insert data into the database
+  try {
+    await sql`INSERT INTO invoices (customer_id, amount, status, date)
+            VALUES (${customerId}, ${amountInCents}, ${status}, ${date})`;
+  } catch (error) {
+    return {
+      message: 'Database Error: Failed to Create Invoice.'
+    }
+  }
+
+  // Revalidate the cache for the invoices page and redirect the user.
+  revalidatePath('/dashboard/invoices');
+  redirect('/dashboard/invoices')
+}
+
+// create-form.tsx
+const initialState: State = { message: null, errors: {} };
+const [state, formAction] = useActionState(createInvoice, initialState);
+// state 為回傳的 error
+return (
+    <form action={formAction}>
+  )
+```
