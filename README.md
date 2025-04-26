@@ -337,3 +337,13 @@ return (
     <form action={formAction}>
   )
 ```
+
+## 15. Adding Authentication
+
+#### Authentication vs. Authorization
+
+- Authentication: 確保用戶身分與他們的所說的內容相符。可以使用 username、password 等資訊來證明身分。
+
+- 下一步才是 Authorization: 確認了使用者身分後，授權會決定他們可以使用應用程式的那些部分。
+
+Authentication verifies your identity. Authorization determines what you can access.
