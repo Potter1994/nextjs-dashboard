@@ -347,3 +347,52 @@ return (
 - 下一步才是 Authorization: 確認了使用者身分後，授權會決定他們可以使用應用程式的那些部分。
 
 Authentication verifies your identity. Authorization determines what you can access.
+
+## 16. Adding Metadata
+
+#### 有兩種方式可以新增
+
+1. Config-based: Export a static metadata object or a dynamic generateMetadata function in a layout.js or page.js file. (自己 export metadata 在 layout.tsx 或 page.tsx)
+
+2. File-based: Next.js has a range of special files that are specifically used for metadata purposes (nextjs 他會去搜尋資料夾)
+
+- favicon.ico, apple-icon.jpg, and icon.jpg: Utilized for favicons and icons
+- opengraph-image.jpg and twitter-image.jpg: Employed for social media images
+- robots.txt: Provides instructions for search engine crawling
+- sitemap.xml: Offers information about the website's structure
+
+#### Open Graph Metadata 一般傳在社群會顯示的東西可以這樣設置
+
+```
+<meta property="og:title" content="Title Here" />
+<meta property="og:description" content="Description Here" />
+<meta property="og:image" content="image_url_here" />
+```
+
+#### Page title and description
+
+引入 next 的 Metadata 並且要將自己定義的 metadata export 出去，nextjs 會自動處理
+
+```/app/layout.tsx
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Acme Dashboard',
+  description: 'The official Next.js Course Dashboard, built with App Router.',
+  metadataBase: new URL('https://next-learn-dashboard.vercel.sh'),
+};
+
+export default function RootLayout() {
+  // ...
+}
+```
+
+想在某個頁面底下更改 metadata 一樣作法
+
+```/app/dashboard/invoices/page.tsx
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Invoices | Acme Dashboard',
+};
+```

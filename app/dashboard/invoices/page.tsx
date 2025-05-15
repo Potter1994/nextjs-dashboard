@@ -7,6 +7,12 @@ import { lusitana } from "@/app/ui/fonts";
 import { InvoicesTableSkeleton } from "@/app/ui/skeletons";
 import { Suspense } from "react";
 import { fetchInvoicesPages } from "@/app/lib/data";
+import { Metadata } from "next";
+
+// 在 page.tsx 或 layout.tsx 中 export metadata 即可新增
+export const metadata: Metadata = {
+  title: "Invoice",
+};
 
 async function Page(props: {
   searchParams?: Promise<{ query?: string; page?: string }>;
